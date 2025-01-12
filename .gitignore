@@ -1,6 +1,7 @@
 /disk/*
 !/disk/.gitkeep
-kernel
+/rust/target/
+/c/kernel
 *.map
 *.tar
 *.o
