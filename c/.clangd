@@ -1,0 +1,13 @@
+CompileFlags:
+  Add: [
+    -xc,
+    -nostdinc,
+    -nostdlib,
+    -std=c11,
+    -O2,
+    -g3,
+    -Wall,
+    -Wextra,
+    --target=riscv64,
+    -ffreestanding,
+  ]
