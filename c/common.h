@@ -8,6 +8,7 @@ typedef unsigned long long uint64_t;
 typedef unsigned long      size_t;
 typedef unsigned long      paddr_t;
 typedef unsigned long      vaddr_t;
+typedef unsigned long      ulong_t;
 
 #define true                     1
 #define false                    0

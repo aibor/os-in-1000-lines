@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common.h"
+
 // https://github.com/riscv-non-isa/riscv-sbi-doc/blob/master/src/ext-debug-console.adoc#function-listing
 // https://github.com/riscv-non-isa/riscv-sbi-doc/blob/master/src/ext-sys-reset.adoc#function-system-reset-fid-0
 
@@ -19,8 +21,8 @@ enum sbi_sys_reset_reason {
 };
 
 struct sbiret {
-  long error;
-  long value;
+  ulong_t error;
+  ulong_t value;
 };
 
 struct sbiret sbi_putchar(char c);

@@ -5,7 +5,7 @@
 extern char __bss[], __bss_end[];
 extern char __free_ram[], __free_ram_end[];
 
-__attribute__((naked)) __attribute__((aligned(sizeof(long)))) void
+__attribute__((naked)) __attribute__((aligned(sizeof(ulong_t)))) void
 kernel_entry(void) {
   __asm__ __volatile__("csrw sscratch, sp\n"
                        "addi sp, sp, -31 * %[size]\n"
@@ -79,14 +79,14 @@ kernel_entry(void) {
                        "lw sp,  30 * %[size](sp)\n"
                        "sret\n"
                        :
-                       : [size] "i"(sizeof(long)));
+                       : [size] "i"(sizeof(ulong_t)));
 }
 
 void
 handle_trap(__attribute__((unused)) struct trap_frame *f) {
-  long scause  = READ_CSR(scause);
-  long stval   = READ_CSR(stval);
-  long user_pc = READ_CSR(sepc);
+  ulong_t scause  = READ_CSR(scause);
+  ulong_t stval   = READ_CSR(stval);
+  ulong_t user_pc = READ_CSR(sepc);
 
   PANIC(
       "unexpected trap scause=%x, stval=%x, sepc=%x\n", scause, stval, user_pc);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common.h"
+
 #define PANIC(fmt, ...) \
   do { \
     printf("PANIC: %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
@@ -21,35 +23,35 @@
   } while (0)
 
 struct trap_frame {
-  long ra;
-  long gp;
-  long tp;
-  long t0;
-  long t1;
-  long t2;
-  long t3;
-  long t4;
-  long t5;
-  long t6;
-  long a0;
-  long a1;
-  long a2;
-  long a3;
-  long a4;
-  long a5;
-  long a6;
-  long a7;
-  long s0;
-  long s1;
-  long s2;
-  long s3;
-  long s4;
-  long s5;
-  long s6;
-  long s7;
-  long s8;
-  long s9;
-  long s10;
-  long s11;
-  long sp;
+  ulong_t ra;
+  ulong_t gp;
+  ulong_t tp;
+  ulong_t t0;
+  ulong_t t1;
+  ulong_t t2;
+  ulong_t t3;
+  ulong_t t4;
+  ulong_t t5;
+  ulong_t t6;
+  ulong_t a0;
+  ulong_t a1;
+  ulong_t a2;
+  ulong_t a3;
+  ulong_t a4;
+  ulong_t a5;
+  ulong_t a6;
+  ulong_t a7;
+  ulong_t s0;
+  ulong_t s1;
+  ulong_t s2;
+  ulong_t s3;
+  ulong_t s4;
+  ulong_t s5;
+  ulong_t s6;
+  ulong_t s7;
+  ulong_t s8;
+  ulong_t s9;
+  ulong_t s10;
+  ulong_t s11;
+  ulong_t sp;
 } __attribute__((packed));

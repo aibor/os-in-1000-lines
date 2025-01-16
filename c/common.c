@@ -5,11 +5,11 @@ void putchar(char ch);
 void
 memset(void *buf, const char c, size_t n) {
   // Optimization: use largest available size first.
-  char v[sizeof(long)] = {[0 ... sizeof(long) - 1] = c};
-  while (n >= sizeof(long)) {
-    *(long *)buf = *(long *)v;
-    buf += sizeof(long);
-    n -= sizeof(long);
+  char v[sizeof(ulong_t)] = {[0 ... sizeof(ulong_t) - 1] = c};
+  while (n >= sizeof(ulong_t)) {
+    *(ulong_t *)buf = *(ulong_t *)v;
+    buf += sizeof(ulong_t);
+    n -= sizeof(ulong_t);
   }
 
   while (n--) {
@@ -20,11 +20,11 @@ memset(void *buf, const char c, size_t n) {
 void
 memcpy(void *dst, const void *src, size_t n) {
   // Optimization: use largest available size first.
-  while (n >= sizeof(long)) {
-    *(long *)dst = *(long *)src;
-    dst += sizeof(long);
-    src += sizeof(long);
-    n -= sizeof(long);
+  while (n >= sizeof(ulong_t)) {
+    *(ulong_t *)dst = *(ulong_t *)src;
+    dst += sizeof(ulong_t);
+    src += sizeof(ulong_t);
+    n -= sizeof(ulong_t);
   }
 
   while (n--) {
