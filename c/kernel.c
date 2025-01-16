@@ -82,6 +82,49 @@ kernel_entry(void) {
                        : [size] "i"(sizeof(ulong_t)));
 }
 
+__attribute__((naked)) void
+switch_context(vaddr_t *prev_sp, vaddr_t *next_sp) {
+  // Save callee-saved registers onto the current process's stack.
+  __asm__ __volatile__("addi sp, sp, -13 * %[size]\n"
+                       "sd ra,  0  * %[size](sp)\n"
+                       "sd s0,  1  * %[size](sp)\n"
+                       "sd s1,  2  * %[size](sp)\n"
+                       "sd s2,  3  * %[size](sp)\n"
+                       "sd s3,  4  * %[size](sp)\n"
+                       "sd s4,  5  * %[size](sp)\n"
+                       "sd s5,  6  * %[size](sp)\n"
+                       "sd s6,  7  * %[size](sp)\n"
+                       "sd s7,  8  * %[size](sp)\n"
+                       "sd s8,  9  * %[size](sp)\n"
+                       "sd s9,  10 * %[size](sp)\n"
+                       "sd s10, 11 * %[size](sp)\n"
+                       "sd s11, 12 * %[size](sp)\n"
+
+                       // Switch the stack pointer.
+                       "sd sp, (a0)\n" // *prev_sp = sp;
+                       "ld sp, (a1)\n" // Switch stack pointer (sp) here
+
+                       // Restore callee-saved registers from the next
+                       // process's stack.
+                       "ld ra,  0  * %[size](sp)\n"
+                       "ld s0,  1  * %[size](sp)\n"
+                       "ld s1,  2  * %[size](sp)\n"
+                       "ld s2,  3  * %[size](sp)\n"
+                       "ld s3,  4  * %[size](sp)\n"
+                       "ld s4,  5  * %[size](sp)\n"
+                       "ld s5,  6  * %[size](sp)\n"
+                       "ld s6,  7  * %[size](sp)\n"
+                       "ld s7,  8  * %[size](sp)\n"
+                       "ld s8,  9  * %[size](sp)\n"
+                       "ld s9,  10 * %[size](sp)\n"
+                       "ld s10, 11 * %[size](sp)\n"
+                       "ld s11, 12 * %[size](sp)\n"
+                       "addi sp, sp, 13 * %[size]\n"
+                       "ret\n"
+                       :
+                       : [size] "i"(sizeof(ulong_t)));
+}
+
 void
 handle_trap(__attribute__((unused)) struct trap_frame *f) {
   ulong_t scause  = READ_CSR(scause);
@@ -117,16 +160,79 @@ alloc_pages(uint32_t n) {
   return paddr;
 }
 
+struct process procs[PROCS_MAX]; // All process control structures.
+
+struct process *
+create_process(ulong_t pc) {
+  // Find an unused process control structure.
+  struct process *proc = NULL;
+  int             i;
+  for (i = 0; i < PROCS_MAX; i++) {
+    if (procs[i].state == PROC_UNUSED) {
+      proc = &procs[i];
+      break;
+    }
+  }
+
+  if (!proc) {
+    PANIC("no free process slots");
+  }
+
+  // Stack callee-saved registers. These register values will be restored in
+  // the first context switch in switch_context.
+  ulong_t *sp = (ulong_t *)&proc->stack[sizeof(proc->stack)];
+  for (int j = 0; j < CALLEE_SAVED_REGS_MAX; j++) {
+    *--sp = 0;
+  }
+  *--sp = pc; // ra
+
+  // Initialize fields.
+  proc->pid   = i + 1;
+  proc->state = PROC_RUNNABLE;
+  proc->sp    = (vaddr_t)sp;
+  return proc;
+}
+
+void
+delay(void) {
+  for (int i = 0; i < 10000000; i++)
+    __asm__ __volatile__("nop"); // do nothing
+}
+
+struct process *proc_a;
+struct process *proc_b;
+
+void
+proc_a_entry(void) {
+  printf("starting process A\n");
+  for (int i = 0; i < 10; i++) {
+    putchar('A');
+    switch_context(&proc_a->sp, &proc_b->sp);
+    delay();
+  }
+}
+
+void
+proc_b_entry(void) {
+  printf("starting process B\n");
+  for (int i = 0; i < 10; i++) {
+    putchar('B');
+    switch_context(&proc_b->sp, &proc_a->sp);
+    delay();
+  }
+}
+
 void
 kernel_main(void) {
   memset(__bss, 0, (size_t)__bss_end - (size_t)__bss);
 
-  paddr_t paddr0 = alloc_pages(2);
-  paddr_t paddr1 = alloc_pages(1);
-  printf("alloc_pages test: paddr0=%x\n", paddr0);
-  printf("alloc_pages test: paddr1=%x\n", paddr1);
+  WRITE_CSR(stvec, (ulong_t)kernel_entry);
 
-  printf("booted!\n");
+  proc_a = create_process((ulong_t)proc_a_entry);
+  proc_b = create_process((ulong_t)proc_b_entry);
+  proc_a_entry();
+
+  printf("\n");
 
   shutdown();
 }

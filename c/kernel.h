@@ -55,3 +55,17 @@ struct trap_frame {
   ulong_t s11;
   ulong_t sp;
 } __attribute__((packed));
+
+#define PROCS_MAX 8 // Maximum number of processes
+
+#define PROC_UNUSED   0 // Unused process control structure
+#define PROC_RUNNABLE 1 // Runnable process
+
+struct process {
+  int     pid;         // Process ID
+  int     state;       // Process state: PROC_UNUSED or PROC_RUNNABLE
+  vaddr_t sp;          // Stack pointer
+  uint8_t stack[8192]; // Kernel stack
+};
+
+#define CALLEE_SAVED_REGS_MAX 12
