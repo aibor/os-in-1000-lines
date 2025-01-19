@@ -5,7 +5,7 @@ void putchar(char ch);
 void
 memset(void *buf, const char c, size_t n) {
   // Optimization: use largest available size first.
-  char v[sizeof(ulong_t)] = {[0 ... sizeof(ulong_t) - 1] = c};
+  char v[sizeof(ulong_t)] = { [0 ... sizeof(ulong_t) - 1] = c };
   while (n >= sizeof(ulong_t)) {
     *(ulong_t *)buf = *(ulong_t *)v;
     buf += sizeof(ulong_t);

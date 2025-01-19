@@ -24,7 +24,7 @@ sbi_ecall(ulong_t eid,
       : "=r"(a0), "=r"(a1)
       : "r"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5), "r"(a6), "r"(a7)
       : "memory");
-  return (struct sbiret){.error = a0, .value = a1};
+  return (struct sbiret){ .error = a0, .value = a1 };
 }
 
 static struct sbiret

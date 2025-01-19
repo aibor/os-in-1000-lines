@@ -127,8 +127,8 @@ switch_context(vaddr_t *prev_sp, vaddr_t *next_sp) {
 
 void
 handle_trap(__attribute__((unused)) struct trap_frame *f) {
-  ulong_t scause  = READ_CSR(scause);
-  ulong_t stval   = READ_CSR(stval);
+  ulong_t scause = READ_CSR(scause);
+  ulong_t stval = READ_CSR(stval);
   ulong_t user_pc = READ_CSR(sepc);
 
   PANIC(
@@ -150,7 +150,7 @@ shutdown() {
 paddr_t
 alloc_pages(uint32_t n) {
   static paddr_t next_paddr = (paddr_t)__free_ram;
-  paddr_t        paddr      = next_paddr;
+  paddr_t        paddr = next_paddr;
   next_paddr += n * PAGE_SIZE;
 
   if (next_paddr > (paddr_t)__free_ram_end)
@@ -187,9 +187,9 @@ create_process(ulong_t pc) {
   *--sp = pc; // ra
 
   // Initialize fields.
-  proc->pid   = i + 1;
+  proc->pid = i + 1;
   proc->state = PROC_RUNNABLE;
-  proc->sp    = (vaddr_t)sp;
+  proc->sp = (vaddr_t)sp;
   return proc;
 }
 
