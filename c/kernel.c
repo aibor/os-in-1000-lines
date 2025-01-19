@@ -7,7 +7,7 @@ extern char __free_ram[], __free_ram_end[];
 
 __attribute__((naked)) __attribute__((aligned(sizeof(ulong_t)))) void
 kernel_entry(void) {
-  __asm__ __volatile__("csrw sscratch, sp\n"
+  __asm__ __volatile__("csrrw sp, sscratch, sp\n"
                        "addi sp, sp, -31 * %[size]\n"
                        "sd ra,  0  * %[size](sp)\n"
                        "sd gp,  1  * %[size](sp)\n"
@@ -40,8 +40,13 @@ kernel_entry(void) {
                        "sd s10, 28 * %[size](sp)\n"
                        "sd s11, 29 * %[size](sp)\n"
 
+                       // Retrieve and save the sp at the time of exception.
                        "csrr a0, sscratch\n"
                        "sd a0, 30 * %[size](sp)\n"
+
+                       // Reset the kernel stack.
+                       "addi a0, sp, 31 * %[size]\n"
+                       "csrw sscratch, a0\n"
 
                        "mv a0, sp\n"
                        "call handle_trap\n"
@@ -193,23 +198,46 @@ create_process(ulong_t pc) {
   return proc;
 }
 
-void
-delay(void) {
-  for (int i = 0; i < 10000000; i++)
-    __asm__ __volatile__("nop"); // do nothing
-}
+struct process *current_proc;
+struct process *idle_proc;
 
-struct process *proc_a;
-struct process *proc_b;
+void
+yield(void) {
+  // Search for a runnable process
+  struct process *next = idle_proc;
+  for (int i = 0; i < PROCS_MAX; i++) {
+    struct process *proc = &procs[(current_proc->pid + i) % PROCS_MAX];
+    if (proc->state == PROC_RUNNABLE && proc->pid > 0) {
+      next = proc;
+      break;
+    }
+  }
+
+  // If there's no runnable process other than the current one, return and continue processing
+  if (next == current_proc) {
+    return;
+  }
+
+  __asm__ __volatile__(
+      "csrw sscratch, %[sscratch]\n"
+      :
+      : [sscratch] "r"((ulong_t)&next->stack[sizeof(next->stack)]));
+
+  // Context switch
+  struct process *prev = current_proc;
+  current_proc = next;
+  switch_context(&prev->sp, &next->sp);
+}
 
 void
 proc_a_entry(void) {
   printf("starting process A\n");
   for (int i = 0; i < 10; i++) {
     putchar('A');
-    switch_context(&proc_a->sp, &proc_b->sp);
-    delay();
+    yield();
   }
+  printf("\n");
+  shutdown();
 }
 
 void
@@ -217,9 +245,10 @@ proc_b_entry(void) {
   printf("starting process B\n");
   for (int i = 0; i < 10; i++) {
     putchar('B');
-    switch_context(&proc_b->sp, &proc_a->sp);
-    delay();
+    yield();
   }
+  printf("\n");
+  shutdown();
 }
 
 void
@@ -228,11 +257,14 @@ kernel_main(void) {
 
   WRITE_CSR(stvec, (ulong_t)kernel_entry);
 
-  proc_a = create_process((ulong_t)proc_a_entry);
-  proc_b = create_process((ulong_t)proc_b_entry);
-  proc_a_entry();
+  idle_proc = create_process((ulong_t)NULL);
+  idle_proc->pid = -1; // idle
+  current_proc = idle_proc;
 
-  printf("\n");
+  create_process((ulong_t)proc_a_entry);
+  create_process((ulong_t)proc_b_entry);
 
-  shutdown();
+  yield();
+
+  PANIC("unreachable here!");
 }
